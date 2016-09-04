@@ -1,71 +1,105 @@
 #include <ESP8266WiFi.h>
 
+
 // Example testing sketch for various DHT humidity/temperature sensors
 // Written by ladyada, public domain
 
 #include "DHT.h"
 
-#define DHTPIN 5     // what digital pin we're connected to
+#define _DHTPIN_ D3     // what digital pin we're connected to
 
 // Uncomment whatever type you're using!
-#define DHTTYPE DHT11   // DHT 11
+#define _DHTTYPE_ DHT11   // DHT 11
+
 //#define DHTTYPE DHT22   // DHT 22  (AM2302), AM2321
 //#define DHTTYPE DHT21   // DHT 21 (AM2301)
+DHT DHT_11(_DHTPIN_, _DHTTYPE_);
 
-// Connect pin 1 (on the left) of the sensor to +5V
-// NOTE: If using a board with 3.3V logic like an Arduino Due connect pin 1
-// to 3.3V instead of 5V!
-// Connect pin 2 of the sensor to whatever your DHTPIN is
-// Connect pin 4 (on the right) of the sensor to GROUND
-// Connect a 10K resistor from pin 2 (data) to pin 1 (power) of the sensor
+#define _TIME_DHT_  2000
+#define _TIME_BLINK_  500
 
-// Initialize DHT sensor.
-// Note that older versions of this library took an optional third parameter to
-// tweak the timings for faster processors.  This parameter is no longer needed
-// as the current DHT reading algorithm adjusts itself to work on faster procs.
-DHT dht(DHTPIN, DHTTYPE);
+#define _LED_STATUS_ D1
+#define _LED_ALARM_ D0
+
 
 void setup() {
-  Serial.begin(9600);
-  Serial.println("DHTxx test!");
+  Serial.begin(115200);
+  Serial.println("DHT11 test!");
 
-  dht.begin();
+  pinMode(_LED_STATUS_,OUTPUT);
+  pinMode(_LED_ALARM_,OUTPUT);
+
+  DHT_11.begin();
 }
 
 void loop() {
-  // Wait a few seconds between measurements.
-  delay(2000);
 
-  // Reading temperature or humidity takes about 250 milliseconds!
-  // Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
-  float h = dht.readHumidity();
-  // Read temperature as Celsius (the default)
-  float t = dht.readTemperature();
-  // Read temperature as Fahrenheit (isFahrenheit = true)
-  float f = dht.readTemperature(true);
+  uint32_t timer = millis();
+  static uint32_t timer_dht = timer;
+  static uint32_t timer_blink = timer;
+  static uint8_t toggle_flag = 0;
 
-  // Check if any reads failed and exit early (to try again).
-  if (isnan(h) || isnan(t) || isnan(f)) {
-    Serial.println("Failed to read from DHT sensor!");
-    return;
+
+  if((timer - timer_blink) >= _TIME_BLINK_)
+  {
+    timer_blink = timer;
+    if(toggle_flag == 1)
+    { 
+      digitalWrite(_LED_STATUS_,HIGH);
+      toggle_flag = 0;
+    }
+    else
+    {
+      digitalWrite(_LED_STATUS_,LOW);
+      toggle_flag = 1;
+    }
   }
 
-  // Compute heat index in Fahrenheit (the default)
-  float hif = dht.computeHeatIndex(f, h);
-  // Compute heat index in Celsius (isFahreheit = false)
-  float hic = dht.computeHeatIndex(t, h, false);
 
-  Serial.print("Humidity: ");
-  Serial.print(h);
-  Serial.print(" %\t");
-  Serial.print("Temperature: ");
-  Serial.print(t);
-  Serial.print(" *C ");
-  Serial.print(f);
-  Serial.print(" *F\t");
-  Serial.print("Heat index: ");
-  Serial.print(hic);
-  Serial.print(" *C ");
-  Serial.print(hif);
-  Serial.println(" *F");
+  if((timer - timer_dht) >= _TIME_DHT_)
+  {
+    timer_dht = timer;
+    
+    // Reading temperature or humidity takes about 250 milliseconds!
+    // Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
+    float h = DHT_11.readHumidity();
+    // Read temperature as Celsius (the default)
+    float t = DHT_11.readTemperature();
+    // Read temperature as Fahrenheit (isFahrenheit = true)
+    float f = DHT_11.readTemperature(true);
+  
+    // Check if any reads failed and exit early (to try again).
+    if (isnan(h) || isnan(t) || isnan(f)) {
+      Serial.println("Failed to read from DHT sensor!");
+      return;
+    }
+  
+    // Compute heat index in Fahrenheit (the default)
+    float hif = DHT_11.computeHeatIndex(f, h);
+    // Compute heat index in Celsius (isFahreheit = false)
+    float hic = DHT_11.computeHeatIndex(t, h, false);
+
+    if (t >= 27.0f)
+    {
+      digitalWrite(_LED_ALARM_,HIGH);
+    }
+    else
+    {
+      digitalWrite(_LED_ALARM_,LOW);
+    }
+    Serial.print("Humidity: ");
+    Serial.print(h);
+    Serial.print(" %\t");
+    Serial.print("Temperature: ");
+    Serial.print(t);
+    Serial.print(" *C ");
+    Serial.print(f);
+    Serial.print(" *F\t");
+    Serial.print("Heat index: ");
+    Serial.print(hic);
+    Serial.print(" *C ");
+    Serial.print(hif);
+    Serial.println(" *F");
+   
+  }
 }
