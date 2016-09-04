@@ -1,31 +1,19 @@
 #include <ESP8266WiFi.h>
-
-
-// Example testing sketch for various DHT humidity/temperature sensors
-// Written by ladyada, public domain
-
 #include "DHT.h"
 
-#define _DHTPIN_ D3     // what digital pin we're connected to
-
-// Uncomment whatever type you're using!
-#define _DHTTYPE_ DHT11   // DHT 11
-
-//#define DHTTYPE DHT22   // DHT 22  (AM2302), AM2321
-//#define DHTTYPE DHT21   // DHT 21 (AM2301)
-DHT DHT_11(_DHTPIN_, _DHTTYPE_);
-
+#define _DHTPIN_ D3     
+#define _DHTTYPE_ DHT11 
 #define _TIME_DHT_  2000
 #define _TIME_BLINK_  500
-
 #define _LED_STATUS_ D1
 #define _LED_ALARM_ D0
 
+DHT DHT_11(_DHTPIN_, _DHTTYPE_);
 
 void setup() {
   Serial.begin(115200);
   Serial.println("DHT11 test!");
-
+  
   pinMode(_LED_STATUS_,OUTPUT);
   pinMode(_LED_ALARM_,OUTPUT);
 
